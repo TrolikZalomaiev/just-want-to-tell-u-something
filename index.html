@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Для тебя 😊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Comfortaa:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    padding: 24px 16px;
+    font-family: 'Comfortaa', sans-serif;
+    background: linear-gradient(160deg, #ffe3ec 0%, #ffd1dc 45%, #f7c6e0 100%);
+    color: #7a2d4b;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hint {
+    font-size: 15px;
+    text-align: center;
+    opacity: .85;
+    transition: opacity .6s;
+  }
+  .card {
+    position: relative;
+    width: min(100%, 380px);
+    border-radius: 22px;
+    background: #fffafc;
+    box-shadow: 0 18px 40px rgba(170, 60, 110, .25), 0 2px 0 rgba(255,255,255,.8) inset;
+    overflow: hidden;
+  }
+  .message {
+    padding: 38px 28px;
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 14px;
+  }
+  .message p {
+    font-family: 'Caveat', cursive;
+    font-size: 31px;
+    line-height: 1.25;
+    color: #b0335f;
+  }
+  .message .emoji { font-size: 34px; }
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: none;
+    transition: opacity .9s ease;
+  }
+  canvas.gone { opacity: 0; pointer-events: none; }
+  .coin {
+    position: fixed;
+    left: 0; top: 0;
+    width: 46px; height: 46px;
+    margin: -23px 0 0 -23px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff6c2 0%, #f5c842 40%, #c9921a 100%);
+    border: 3px solid #b8800f;
+    box-shadow: 0 3px 8px rgba(0,0,0,.25);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #8a5c05;
+    font-size: 18px;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .float-smile {
+    position: fixed;
+    bottom: -40px;
+    pointer-events: none;
+    animation: rise linear forwards;
+    z-index: 5;
+  }
+  @keyframes rise {
+    to { transform: translateY(-115vh) rotate(var(--r)); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="hint" id="hint">Сотри, как лотерейный билет 🪙</div>
+
+  <div class="card" id="card">
+    <div class="message">
+      <div class="emoji">😊</div>
+      <p>Просто хочу сказать тебе, что ты очень хорошая и красивая, и надеюсь, что это заставит тебя улыбнуться</p>
+      <div class="emoji">😄</div>
+    </div>
+    <canvas id="scratch"></canvas>
+  </div>
+
+  <div class="coin" id="coin">☺</div>
+
+<script>
+  const card = document.getElementById('card');
+  const canvas = document.getElementById('scratch');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const coin = document.getElementById('coin');
+  const hint = document.getElementById('hint');
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+
+  let drawing = false, last = null, revealed = false, moves = 0, lastWidth = 0;
+
+  function paintCover() {
+    const r = card.getBoundingClientRect();
+    lastWidth = r.width;
+    canvas.width = Math.round(r.width * dpr);
+    canvas.height = Math.round(r.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const w = r.width, h = r.height;
+
+    ctx.globalCompositeOperation = 'source-over';
+    const g = ctx.createLinearGradient(0, 0, w, h);
+    g.addColorStop(0, '#d9d9e0');
+    g.addColorStop(.35, '#f4f4f8');
+    g.addColorStop(.55, '#bfc0c9');
+    g.addColorStop(1, '#e6e6ec');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+
+    // metallic speckles
+    for (let i = 0; i < w * h / 40; i++) {
+      ctx.fillStyle = Math.random() < .5 ? 'rgba(255,255,255,.5)' : 'rgba(120,120,135,.18)';
+      ctx.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5);
+    }
+
+    // little smileys pattern
+    ctx.font = '18px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(200,90,140,.28)';
+    for (let y = 22; y < h; y += 44) {
+      for (let x = (y / 44) % 2 ? 22 : 44; x < w; x += 44) ctx.fillText('☺', x, y);
+    }
+
+    ctx.fillStyle = '#8b5a73';
+    ctx.font = '700 22px Comfortaa, sans-serif';
+    ctx.fillText('Сотри меня ✨', w / 2, h / 2 - 12);
+    ctx.font = '500 14px Comfortaa, sans-serif';
+    ctx.fillText('здесь кое-что для тебя', w / 2, h / 2 + 18);
+  }
+
+  function pos(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+
+  function scratch(p) {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 42;
+    ctx.beginPath();
+    ctx.moveTo((last || p).x, (last || p).y);
+    ctx.lineTo(p.x + .01, p.y);
+    ctx.stroke();
+    last = p;
+    if (++moves % 8 === 0) checkProgress();
+  }
+
+  function checkProgress() {
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let clear = 0, total = 0;
+    for (let i = 3; i < data.length; i += 4 * 16) {
+      total++;
+      if (data[i] < 128) clear++;
+    }
+    if (clear / total > 0.5) reveal();
+  }
+
+  function reveal() {
+    if (revealed) return;
+    revealed = true;
+    canvas.classList.add('gone');
+    coin.style.display = 'none';
+    hint.style.opacity = 0;
+    if (navigator.vibrate) navigator.vibrate(60);
+    smiles();
+  }
+
+  function smiles() {
+    const emojis = ['😊', '😄', '😁', '🙂', '😃', '🤗', '😆'];
+    let n = 0;
+    const timer = setInterval(() => {
+      const el = document.createElement('div');
+      el.className = 'float-smile';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.fontSize = (18 + Math.random() * 22) + 'px';
+      el.style.setProperty('--r', (Math.random() * 120 - 60) + 'deg');
+      el.style.animationDuration = (4 + Math.random() * 3) + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 7500);
+      if (++n > 45) clearInterval(timer);
+    }, 120);
+  }
+
+  canvas.addEventListener('pointerdown', e => {
+    if (revealed) return;
+    drawing = true;
+    last = null;
+    canvas.setPointerCapture(e.pointerId);
+    scratch(pos(e));
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse' && !revealed) {
+      coin.style.display = 'flex';
+      coin.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+    }
+    if (drawing && !revealed) scratch(pos(e));
+  });
+  const stop = () => { drawing = false; last = null; if (!revealed) checkProgress(); };
+  canvas.addEventListener('pointerup', stop);
+  canvas.addEventListener('pointercancel', stop);
+  canvas.addEventListener('pointerleave', () => { coin.style.display = 'none'; });
+
+  window.addEventListener('resize', () => {
+    if (!revealed && Math.abs(card.getBoundingClientRect().width - lastWidth) > 1) paintCover();
+  });
+
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(paintCover);
+  paintCover();
+</script>
+</body>
+</html>
